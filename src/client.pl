@@ -36,8 +36,12 @@ my $servers_file = $config{Data}{servers_file};
 my $url = "$data_url/$repo/$branch/$servers_file";
 my $response = `curl -s "$url"`;
 
-print $url;
 print $response;
+
+foreach my $line (split /\n/, $response) {
+    print $line;
+}
+
 
 # Create a TCP client socket
 my $socket = IO::Socket::INET->new(
