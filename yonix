@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="0.77"
+VERSION="0.84"
 
 # Prevent re-execution after sudo
 SUDO_REEXEC=${SUDO_REEXEC:-false}
@@ -513,6 +513,7 @@ check_for_updates() {
         done < <(find "$nix_dir" -name "yonix" 2>/dev/null)
     fi
 
+    log_info "Searching for newer version"
     if [[ ! -z "$newest_file" ]]; then
         log_info "Found newer version v${newest_version} in ${newest_file}"
         echo -e "${YELLOW}Would you like to update? (y/N)${NC}"
