@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="0.81"
+VERSION="0.77"
 
 # Prevent re-execution after sudo
 SUDO_REEXEC=${SUDO_REEXEC:-false}
@@ -209,67 +209,28 @@ check_git() {
 }
 
 check_git_updates() {
-    # Check if the local git repository and its submodules are behind the remote; offer to pull updates if necessary.
-    local updates_needed=0
-    local updates_performed=0
-    local needs_submodule_update=0
-
+    # Check if the local git repository is behind the remote; offer to pull updates if necessary.
     if [ -d ".git" ]; then
-        # Initialize and update submodules first
-        git submodule update --init --quiet
-
-        # Update information about remotes
         git remote update &> /dev/null
-
-        # Check main repository
         UPSTREAM=${1:-'@{u}'}
         LOCAL=$(git rev-parse @)
         REMOTE=$(git rev-parse "$UPSTREAM")
         BASE=$(git merge-base @ "$UPSTREAM")
 
         if [ "$LOCAL" = "$REMOTE" ]; then
-            log_info "Main repository is up to date"
+            log_info "Git repository is up to date"
+            return 0
         elif [ "$LOCAL" = "$BASE" ]; then
-            log_warning "Main repository needs to be updated"
-            updates_needed=1
-        fi
-
-        # Check submodules that contain yonix
-        if [ -f ".gitmodules" ]; then
-            while read -r module_path; do
-                if [ -f "$module_path/yonix" ]; then
-                    log_info "Checking Yonix submodule at $module_path"
-                    if (cd "$module_path" && \
-                         git remote update &> /dev/null && \
-                         SUB_LOCAL=$(git rev-parse @) && \
-                         SUB_REMOTE=$(git rev-parse '@{u}') && \
-                         SUB_BASE=$(git merge-base @ '@{u}') && \
-                         [ "$SUB_LOCAL" != "$SUB_REMOTE" ] && [ "$SUB_LOCAL" = "$SUB_BASE" ]); then
-                        log_warning "Submodule at $module_path needs to be updated"
-                        needs_submodule_update=1
-                    fi
-                fi
-            done < <(git config --file .gitmodules --get-regexp path | awk '{ print $2 }')
-        fi
-
-        # If updates are needed, offer to pull
-        if [ "$updates_needed" -eq 1 ] || [ "$needs_submodule_update" -eq 1 ]; then
+            log_warning "Git repository needs to be updated"
             echo -e "${YELLOW}Would you like to pull updates? (y/N)${NC}"
             read -r answer
             if [[ "$answer" == "y" ]]; then
-                # Pull main repo updates
-                run_with_spinner "git pull" "Pulling updates for main repository" true
-                # Update all submodules to latest
-                run_with_spinner "git submodule update --init --recursive --remote" "Updating submodules" true
-                # Ensure submodules are on their proper branches
-                git submodule foreach 'git checkout $(git config -f $toplevel/.gitmodules submodule.$name.branch || echo main)'
-                updates_performed=1
-                return 2
+                run_with_spinner "git pull" "Pulling updates from remote repository" true
+                return 2  # Signal that we updated
             fi
             return 1
         fi
     fi
-
     return 0
 }
 
