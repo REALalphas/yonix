@@ -322,14 +322,14 @@ update_system() {
     # Run rebuild showing output
     if [ "$use_flakes" = true ]; then
         log_info "Rebuilding system with flakes..."
-        if sudo nixos-rebuild switch --fast --flake .; then
+        if sudo nixos-rebuild switch --no-reexec --flake .; then
             log_success "System update completed"
         else
             handle_error "System update failed"
         fi
     else
         log_info "Rebuilding system..."
-        if sudo nixos-rebuild switch --fast; then
+        if sudo nixos-rebuild switch --no-reexec; then
             log_success "System update completed"
         else
             handle_error "System update failed"
