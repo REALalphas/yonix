@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="0.86"
+VERSION="0.87"
 
 # Prevent re-execution after sudo
 SUDO_REEXEC=${SUDO_REEXEC:-false}
