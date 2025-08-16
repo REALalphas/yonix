@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="0.87"
+VERSION="0.88"
 
 # Prevent re-execution after sudo
 SUDO_REEXEC=${SUDO_REEXEC:-false}
@@ -147,6 +147,7 @@ Commands:
 
 Options:
     --no-flakes   Run without flakes support
+    --legacy      Use --fast (Deprecated) instead of --no-reexec
     --remove      Remove everything from /etc/nixos before operation
     -h, --help    Show this help message
     -v, --version Show version information
@@ -320,16 +321,21 @@ update_system() {
     cd /etc/nixos || handle_error "Failed to change directory"
 
     # Run rebuild showing output
+    command_fast="--no-reexec"
+    if [ "$legacy_fast" = true ]; then
+        command_fast="--fast"
+    fi
+
     if [ "$use_flakes" = true ]; then
         log_info "Rebuilding system with flakes..."
-        if sudo nixos-rebuild switch --no-reexec --flake .; then
+        if sudo nixos-rebuild switch $command_fast --flake .; then
             log_success "System update completed"
         else
             handle_error "System update failed"
         fi
     else
         log_info "Rebuilding system..."
-        if sudo nixos-rebuild switch --no-reexec; then
+        if sudo nixos-rebuild switch $command_fast; then
             log_success "System update completed"
         else
             handle_error "System update failed"
@@ -478,6 +484,7 @@ show_nix_dir() {
 
 # Default settings
 use_flakes=true
+legacy_fast=false
 quiet_mode=false
 remove_nixos=false
 command=""
@@ -606,6 +613,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-flakes)
             use_flakes=false
+            shift
+            ;;
+        --legacy)
+            legacy_fast=true
             shift
             ;;
         --remove)
